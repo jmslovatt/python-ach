@@ -73,7 +73,7 @@ class Ach(object):
         else:
             raise AchError("field does not match alpha numeric criteria")
 
-        return field.upper()
+        return field
 
     def validate_numeric_field(self, field, length):
         """

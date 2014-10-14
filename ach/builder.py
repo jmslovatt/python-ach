@@ -36,7 +36,7 @@ class AchFile(object):
 
         self.batches = list()
 
-    def add_batch(self, std_ent_cls_code, batch_entries=None,
+    def add_batch(self, std_ent_cls_code, batch_entries=None, entry_desc=None,
                   credits=True, debits=False, eff_ent_date=None):
         """
         Use this to add batches to the file. For valid std_ent_cls_codes see:
@@ -45,7 +45,7 @@ class AchFile(object):
         if batch_entries is None:
             batch_entries = list()
 
-        entry_desc = self.get_entry_desc(std_ent_cls_code)
+        entry_desc = entry_desc or self.get_entry_desc(std_ent_cls_code)
 
         batch_count = len(self.batches) + 1
 
@@ -68,7 +68,7 @@ class AchFile(object):
             desc_date='',
             eff_ent_date=eff_ent_date.strftime('%y%m%d'),  # YYMMDD
             orig_stat_code='1',
-            orig_dfi_id=self.settings['immediate_dest'][:8],
+            orig_dfi_id=self.settings['immediate_org'][:8],
             company_name=self.settings['immediate_org_name']
         )
 
@@ -82,6 +82,10 @@ class AchFile(object):
             entry.transaction_code = record.get('type')
             entry.recv_dfi_id = record.get('routing_number')
 
+            id_number = record.get('id_number')
+            if id_number:
+                entry.id_number = id_number
+
             if len(record['routing_number']) < 9:
                 entry.calc_check_digit()
             else:
@@ -89,14 +93,15 @@ class AchFile(object):
 
             entry.dfi_acnt_num = record['account_number']
             entry.amount = int(round(float(record['amount']) * 100))
-            entry.ind_name = record['name'].upper()[:22]
-            entry.trace_num = self.settings['immediate_dest'][:8] \
+            entry.ind_name = record['name'][:22]
+            entry.trace_num = self.settings['immediate_org'][:8] \
                 + entry.validate_numeric_field(entry_counter, 7)
 
             entries.append((entry, record.get('addenda', [])))
             entry_counter += 1
 
         self.batches.append(FileBatch(batch_header, entries))
+
         self.set_control()
 
     def set_control(self):
@@ -326,7 +331,7 @@ class FileEntry(object):
             self.addenda_record.append(
                 AddendaRecord(
                     self.entry_detail.std_ent_cls_code,
-                    pmt_rel_info=addenda.get('payment_related_info').upper(),
+                    pmt_rel_info=addenda.get('payment_related_info'),
                     add_seq_num=index,
                     ent_det_seq_num=entry_detail.trace_num[-7:]
                 )
