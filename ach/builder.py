@@ -65,7 +65,7 @@ class AchFile(object):
             company_id=self.settings['company_id'],
             std_ent_cls_code=std_ent_cls_code,
             entry_desc=entry_desc,
-            desc_date='',
+            desc_date=eff_ent_date.strftime('%y%m%d'),
             eff_ent_date=eff_ent_date.strftime('%y%m%d'),  # YYMMDD
             orig_stat_code='1',
             orig_dfi_id=self.settings['immediate_org'][:8],
